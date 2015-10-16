@@ -1,8 +1,8 @@
 # Perevod
 
-Pervod, a image communicator.
+Pervod, a image communicator using TCP.
 
-![ss](https://raw.githubusercontent.com/0x0c/Perevod/master/Screen%20Shot%202015-10-17%20at%202.46.34%20AM.png)
+![ss](https://raw.githubusercontent.com/0x0c/Perevod/master/asset/Screen%20Shot%202015-10-17%20at%202.46.34%20AM.png)
 
 ## Requirements
 
@@ -27,6 +27,10 @@ make run_s
 ```
 
 Please run with server mode first.
+
+## TODO
+- [ ] Use udp.
+- [ ] Multi threading.
 
 ## Credits
 Gif anime 
