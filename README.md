@@ -14,17 +14,19 @@ Pervod, a image communicator.
 
 ## Usage
 
-For client.
+For client mode.
 
 ```
 make run_c
 ```
 
-For server.
+For server mode.
 
 ```
 make run_s
 ```
+
+Please run with server mode first.
 
 ## Credits
 Gif anime 
