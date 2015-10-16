@@ -2,6 +2,8 @@
 
 Pervod, a image communicator.
 
+![ss](https://raw.githubusercontent.com/0x0c/Perevod/master/Screen%20Shot%202015-10-17%20at%202.46.34%20AM.png)
+
 ## Requirements
 
 - C++11
