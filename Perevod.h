@@ -151,13 +151,13 @@ namespace Perevod
 		int receive_port;
 		bool suspend_cast_loop;
 		bool suspend_receive_loop;
-		std::function<void(ImageFrame *frame)> receive_handler = nullptr;
+		std::function<void(ImageFrame *frame)> receive_handler;
 
 		ImageSocket(std::string ip_address, int send_port, int receive_port) : send_socket(this->send_io_service), receive_socket(this->receive_io_service), acceptor(this->receive_io_service, tcp::endpoint(tcp::v4(), receive_port)) {
 			this->ip_address = ip_address;
 			this->send_port = send_port;
 			this->receive_port = receive_port;
-
+			this->receive_handler = nullptr;
 			// asio::socket_base::reuse_address option(true);
 			// this->acceptor.set_option(option);
 			asio::socket_base::keep_alive keep_alive(true);
