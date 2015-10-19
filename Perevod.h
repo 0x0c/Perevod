@@ -29,9 +29,18 @@ namespace Perevod
 			this->data = new unsigned char [image_data_size];
 			std::memcpy(this->data, data, image_data_size);
 		};
+
 		~ImageFrame() {
 			delete this->data;
 		};
+
+		uint32_t position_x() {
+			return this->x;
+		}
+
+		uint32_t position_y() {
+			return this->y;
+		}
 
 		unsigned char* image_data() {
 			return this->data;
@@ -107,6 +116,22 @@ namespace Perevod
 		}
 	};
 
+	class ImageSocketUDPImpl
+	{
+	public:
+		ImageSocketUDPImpl();
+		~ImageSocketUDPImpl();
+		
+	};
+
+	class ImageSocketTCPImpl
+	{
+	public:
+		ImageSocketTCPImpl();
+		~ImageSocketTCPImpl();
+		
+	};
+
 	class ImageSocket
 	{
 		asio::io_service send_io_service;
@@ -135,6 +160,8 @@ namespace Perevod
 
 			// asio::socket_base::reuse_address option(true);
 			// this->acceptor.set_option(option);
+			asio::socket_base::keep_alive keep_alive(true);
+			this->acceptor.set_option(keep_alive);
 		}
 
 		~ImageSocket() {
@@ -143,6 +170,7 @@ namespace Perevod
 		void push_frame(ImageFrame *frame) {
 			this->send_queue.push(frame);
 		}
+
 		ImageFrame* pop_frame() {
 			return this->received_queue.try_pop();
 		}
