@@ -31,6 +31,11 @@ Please run with server mode first.
 ## TODO
 - [ ] Use udp.
 - [ ] Multi threading.
+- [ ] Use smart pointer. 
+
+## Licence
+
+MIT Licence
 
 ## Credits
 Gif anime 
