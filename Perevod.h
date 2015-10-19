@@ -126,11 +126,25 @@ namespace Perevod
 
 	class ImageSocketTCPImpl
 	{
+		asio::io_service send_io_service;
+		tcp::socket send_socket;
+
+		asio::io_service receive_io_service;
+		tcp::socket receive_socket;
+		asio::streambuf receive_buffer;
+		tcp::acceptor acceptor;
 	public:
-		ImageSocketTCPImpl();
+		ImageSocketTCPImpl(std::string ip_address, int send_port, int receive_port) : send_socket(this->send_io_service), receive_socket(this->receive_io_service), acceptor(this->receive_io_service, tcp::endpoint(tcp::v4(), receive_port)) {
+			
+		};
 		~ImageSocketTCPImpl();
 		
 	};
+
+	typedef enum {
+		ImageSocketModeTCP,
+		ImageSocketModeUDP
+	} ImageSocketMode;
 
 	class ImageSocket
 	{
@@ -145,6 +159,9 @@ namespace Perevod
 		Queue<ImageFrame*> send_queue;
 		Queue<ImageFrame*> received_queue;
 
+		ImageSocketMode mode;
+		ImageSocketTCPImpl *tcp_impl;
+		ImageSocketUDPImpl *upd_impl;
 	public:
 		std::string ip_address;
 		int send_port;
@@ -153,19 +170,21 @@ namespace Perevod
 		bool suspend_receive_loop;
 		std::function<void(ImageFrame *frame)> receive_handler;
 
-		ImageSocket(std::string ip_address, int send_port, int receive_port) : send_socket(this->send_io_service), receive_socket(this->receive_io_service), acceptor(this->receive_io_service, tcp::endpoint(tcp::v4(), receive_port)) {
+		ImageSocket(std::string ip_address, int send_port, int receive_port, ImageSocketMode mode) : send_socket(this->send_io_service), receive_socket(this->receive_io_service), acceptor(this->receive_io_service, tcp::endpoint(tcp::v4(), receive_port)), mode(mode) {
 			this->ip_address = ip_address;
 			this->send_port = send_port;
 			this->receive_port = receive_port;
 			this->receive_handler = nullptr;
+			this->suspend_cast_loop = true;
+			this->suspend_receive_loop = true;
+
 			// asio::socket_base::reuse_address option(true);
 			// this->acceptor.set_option(option);
 			asio::socket_base::keep_alive keep_alive(true);
 			this->acceptor.set_option(keep_alive);
 		}
 
-		~ImageSocket() {
-		};
+		~ImageSocket() {};
 
 		void push_frame(ImageFrame *frame) {
 			this->send_queue.push(frame);
@@ -176,10 +195,13 @@ namespace Perevod
 		}
 
 		void send_data(unsigned char *data, int size) {
-			this->send_socket.connect(tcp::endpoint(asio::ip::address::from_string(this->ip_address), this->send_port));
+			boost::system::error_code error;
+			do {
+				this->send_socket.connect(tcp::endpoint(asio::ip::address::from_string(this->ip_address), this->send_port), error);
+			} while (error);
+
 			this->send_io_service.run();
 
-			boost::system::error_code error;
 			asio::write(this->send_socket, asio::buffer(data, size), error);
 		}
 
@@ -194,9 +216,6 @@ namespace Perevod
 
 		ImageFrame* read_frame() {
 			this->acceptor.accept(this->receive_socket);
-
-			asio::socket_base::keep_alive option(true);
-			this->receive_socket.set_option(option);
 
 			ImageFrame *frame = nullptr;
 			boost::system::error_code error;
@@ -225,8 +244,10 @@ namespace Perevod
 		void run_cast_loop() {
 			this->suspend_cast_loop = false;
 			while (!this->suspend_cast_loop) {
-				ImageFrame *frame = this->send_queue.pop();
-				this->send_frame(frame);
+				ImageFrame *frame = this->send_queue.try_pop();
+				if (frame) {
+					this->send_frame(frame);
+				}
 			}
 		}
 

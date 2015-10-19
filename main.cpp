@@ -17,53 +17,34 @@ cv::Mat bytes_to_mat(unsigned char *bytes, uint32_t width, uint32_t height)
 
 int main(int argc, char **argv)
 {
-	Perevod::ImageSocket socket(std::string(argv[2]), atoi(argv[3]), atoi(argv[4]));
-	if (strcmp(argv[1], "-c") == 0) {
-		std::cout << "client" << std::endl;
-		auto t = std::thread([&socket] {
-			socket.run_cast_loop();
-		});
-		int index = 0;
-		while (1) {
-			std::string filename = "img/" + std::to_string(index % 30 + 1) + ".jpeg";
-			cv::Mat image = cv::imread(filename);
-			cv::imshow("send image", image);
-			Perevod::ImageFrame *frame = new Perevod::ImageFrame(0, 0, image.cols, image.rows, image.data);
-			std::cout << "send frame : " << frame->size() << std::endl;
-			socket.push_frame(frame);
-			index++;
-			if (cv::waitKey(60) > 0) {
-				break;
-			}
+	Perevod::ImageSocket socket(std::string(argv[2]), atoi(argv[3]), atoi(argv[4]), Perevod::ImageSocketModeTCP);
+	std::cout << "client" << std::endl;
+	auto t = std::thread([&socket] {
+		socket.run_cast_loop();
+	});
+	auto t2 = std::thread([&socket] {
+		socket.run_receive_loop();
+	});
+	int index = 0;
+	while (1) {
+		std::string filename = "img/" + std::to_string(index % 30 + 1) + ".jpeg";
+		cv::Mat image = cv::imread(filename);
+		Perevod::ImageFrame *frame = new Perevod::ImageFrame(200, 400, image.cols, image.rows, image.data);
+		std::cout << "push frame : " << frame->size() << std::endl;
+		socket.push_frame(frame);
+		index++;
+
+		cv::imshow("send image" + std::string(argv[1]), image);
+
+		Perevod::ImageFrame *frame2 = socket.pop_frame();
+		if (frame2) {
+			std::cout << "receive" << std::endl;
+			cv::Mat image = bytes_to_mat(frame2->image_data(), frame2->image_width(), frame2->image_height());
+			cv::imshow("received image" + std::string(argv[1]), image);
+			delete frame2;
 		}
-		t.join();
-	}
-	else if (strcmp(argv[1], "-s") == 0){
-		std::cout << "server" << std::endl;
-		// socket.receive_handler = [&](Perevod::ImageFrame *frame) {
-		// 	if (frame) {
-		// 		std::cout << "read frame : " << frame->size() << std::endl;
-		// 		cv::Mat image = bytes_to_mat(frame->image_data(), frame->image_width(), frame->image_height());
-		// 		cv::imshow("received image", image);
-		// 		if (cv::waitKey(60) > 0) {
-		// 			socket.suspend_receive_loop = true;
-		// 		}
-		// 	}
-		// };
-		auto t = std::thread([&socket] {
-			socket.run_receive_loop();
-		});
-		while (1) {
-			Perevod::ImageFrame *frame = socket.pop_frame();
-			if (frame) {
-				cv::Mat image = bytes_to_mat(frame->image_data(), frame->image_width(), frame->image_height());
-				cv::imshow("received image", image);
-				delete frame;
-				if (cv::waitKey(60) > 0) {
-					break;
-				}
-			}
+		if (cv::waitKey(60) > 0) {
+			break;
 		}
-		t.join();
 	}
 }
