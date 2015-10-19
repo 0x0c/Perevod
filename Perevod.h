@@ -3,6 +3,8 @@
 #include <iostream>
 #include <functional>
 #include <queue>
+#include <mutex>
+#include <condition_variable>
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
@@ -88,6 +90,17 @@ namespace Perevod
 			return i;
 		}
 
+		T try_pop() {
+			std::unique_lock<std::mutex> lock(this->mutex);
+			if (this->queue.empty()) {
+				return nullptr;
+			}
+			auto i = this->queue.front();
+			this->queue.pop();
+
+			return i;	
+		}
+
 		bool empty() const {
 			std::unique_lock<std::mutex> lock(this->mutex);
 			return this->queue.empty();
@@ -103,7 +116,9 @@ namespace Perevod
 		tcp::socket receive_socket;
 		asio::streambuf receive_buffer;
 		tcp::acceptor acceptor;
-		Queue<ImageFrame*> queue;
+
+		Queue<ImageFrame*> send_queue;
+		Queue<ImageFrame*> received_queue;
 
 	public:
 		std::string ip_address;
@@ -111,7 +126,7 @@ namespace Perevod
 		int receive_port;
 		bool suspend_cast_loop;
 		bool suspend_receive_loop;
-		std::function<void(ImageFrame *frame)> receive_handler;
+		std::function<void(ImageFrame *frame)> receive_handler = nullptr;
 
 		ImageSocket(std::string ip_address, int send_port, int receive_port) : send_socket(this->send_io_service), receive_socket(this->receive_io_service), acceptor(this->receive_io_service, tcp::endpoint(tcp::v4(), receive_port)) {
 			this->ip_address = ip_address;
@@ -126,7 +141,10 @@ namespace Perevod
 		};
 
 		void push_frame(ImageFrame *frame) {
-			this->queue.push(frame);
+			this->send_queue.push(frame);
+		}
+		ImageFrame* pop_frame() {
+			return this->received_queue.try_pop();
 		}
 
 		void send_data(unsigned char *data, int size) {
@@ -143,6 +161,7 @@ namespace Perevod
 			this->send_data(frame_data, frame->frame_size());
 			delete frame_data;
 			this->send_socket.close();
+			delete frame;
 		}
 
 		ImageFrame* read_frame() {
@@ -178,7 +197,7 @@ namespace Perevod
 		void run_cast_loop() {
 			this->suspend_cast_loop = false;
 			while (!this->suspend_cast_loop) {
-				ImageFrame *frame = this->queue.pop();
+				ImageFrame *frame = this->send_queue.pop();
 				this->send_frame(frame);
 			}
 		}
@@ -187,8 +206,14 @@ namespace Perevod
 			this->suspend_receive_loop = false;
 			while (!this->suspend_receive_loop) {
 				ImageFrame *frame = this->read_frame();
-				this->receive_handler(frame);
-				delete frame;
+				if (this->receive_handler) {
+					this->receive_handler(frame);
+					delete frame;
+				}
+				else {
+					std::cout << "push received frame" << std::endl;
+					this->received_queue.push(frame);
+				}
 			}
 		}
 	};
