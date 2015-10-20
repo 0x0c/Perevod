@@ -11,4 +11,4 @@ run_c:
 	./a.out -c 127.0.0.1 31401 31400
 
 clean:
-	rm ./a.out%
+	rm ./a.out

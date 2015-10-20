@@ -27,21 +27,21 @@ int main(int argc, char **argv)
 	});
 	int index = 0;
 	while (1) {
-		std::string filename = "img/" + std::to_string(index % 30 + 1) + ".jpeg";
+		std::string filename = "img/" + std::string(argv[1]) + "/" + std::to_string(index % 30 + 1) + ".jpeg";
 		cv::Mat image = cv::imread(filename);
-		Perevod::ImageFrame *frame = new Perevod::ImageFrame(200, 400, image.cols, image.rows, image.data);
-		std::cout << "push frame : " << frame->size() << std::endl;
+
+		auto frame = std::make_shared<Perevod::ImageFrame *>(new Perevod::ImageFrame(200, 400, image.cols, image.rows, image.data));
+		std::cout << "push frame : " << (*frame)->size() << std::endl;
 		socket.push_frame(frame);
 		index++;
 
 		cv::imshow("send image" + std::string(argv[1]), image);
 
-		Perevod::ImageFrame *frame2 = socket.pop_frame();
+		auto frame2 = socket.pop_frame();
 		if (frame2) {
 			std::cout << "receive" << std::endl;
-			cv::Mat image = bytes_to_mat(frame2->image_data(), frame2->image_width(), frame2->image_height());
+			cv::Mat image = bytes_to_mat((*frame2)->image_data(), (*frame2)->image_width(), (*frame2)->image_height());
 			cv::imshow("received image" + std::string(argv[1]), image);
-			delete frame2;
 		}
 		if (cv::waitKey(60) > 0) {
 			break;
