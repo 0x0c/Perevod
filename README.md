@@ -17,13 +17,13 @@ Pervod, a image communicator using TCP.
 For client mode.
 
 ```
-make run_c
+make c
 ```
 
 For server mode.
 
 ```
-make run_s
+make s
 ```
 
 ## TODO
