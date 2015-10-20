@@ -13,6 +13,9 @@
 namespace asio = boost::asio;
 using asio::ip::tcp;
 
+#define DEBUG
+#ifdef PEREVOD_DEBUG_LOG(x) std::cout << x << std::endl;
+
 namespace Perevod
 {
 	class ImageFrame
@@ -225,11 +228,11 @@ namespace Perevod
 			this->upd_impl = nullptr;
 
 			if (mode == ImageSocketModeTCP) {
-				std::cout << "TCP" << std::endl;
+				PEREVOD_DEBUG_LOG("TCP");
 				this->tcp_impl = new ImageSocketTCPImpl(ip_address, send_port, receive_port);
 			}
 			else {
-				std::cout << "UDP" << std::endl;
+				PEREVOD_DEBUG_LOG("UDP");
 				this->upd_impl = new ImageSocketUDPImpl();
 			}
 			
@@ -266,7 +269,6 @@ namespace Perevod
 			while (!this->suspend_cast_loop) {
 				std::shared_ptr<Perevod::ImageFrame *>frame = this->send_queue.try_pop();
 				if (frame) {
-					std::cout << "pop frame" << std::endl;
 					this->send_frame(frame);
 				}
 			}
@@ -280,7 +282,6 @@ namespace Perevod
 					this->receive_handler(frame);
 				}
 				else {
-					std::cout << "push received frame" << std::endl;
 					this->received_queue.push(frame);
 				}
 			}
