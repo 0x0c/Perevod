@@ -14,7 +14,9 @@ namespace asio = boost::asio;
 using asio::ip::tcp;
 
 #define DEBUG
-#ifdef PEREVOD_DEBUG_LOG(x) std::cout << x << std::endl;
+#ifdef DEBUG
+#define PEREVOD_DEBUG_LOG(x) std::cout << x << std::endl;
+#endif
 
 namespace Perevod
 {
