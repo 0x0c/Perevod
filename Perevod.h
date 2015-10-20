@@ -6,6 +6,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <memory>
+#include <thread>
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
@@ -16,6 +17,7 @@ using asio::ip::tcp;
 #define DEBUG
 #ifdef DEBUG
 #define PEREVOD_DEBUG_LOG(x) std::cout << x << std::endl;
+#define PEREVOD_DEBUG_PRETTY_LOG(x) std::cout << __PRETTY_FUNCTION__ << " " << x << std::endl;
 #endif
 
 namespace Perevod
@@ -24,21 +26,20 @@ namespace Perevod
 	{
 	protected:
 		uint32_t x, y, width, height;
-		unsigned char *data;
+		std::vector<unsigned char> data;
 	public:
+		
 		ImageFrame(uint32_t x, uint32_t y, uint32_t width, uint32_t height, unsigned char *data) {
 			this->x = x;
 			this->y = y;
 			this->width = width;
 			this->height = height;
 			int image_data_size = width * height * 3;
-			this->data = new unsigned char [image_data_size];
-			std::memcpy(this->data, data, image_data_size);
+			this->data.resize(image_data_size);
+			std::copy(data, data + image_data_size, this->data.begin());
 		};
 
-		~ImageFrame() {
-			delete this->data;
-		};
+		~ImageFrame() {};
 
 		uint32_t position_x() {
 			return this->x;
@@ -49,7 +50,8 @@ namespace Perevod
 		}
 
 		unsigned char* image_data() {
-			return this->data;
+			std::string data_str(this->data.begin(), this->data.end());
+			return (unsigned char *)data_str.c_str();
 		}
 
 		int image_width() {
@@ -66,7 +68,7 @@ namespace Perevod
 			std::memcpy(frame_data + sizeof(uint32_t), &this->y, sizeof(uint32_t));
 			std::memcpy(frame_data + sizeof(uint32_t) * 2, &this->width, sizeof(uint32_t));
 			std::memcpy(frame_data + sizeof(uint32_t) * 3, &this->height, sizeof(uint32_t));
-			std::memcpy(frame_data + sizeof(uint32_t) * 4, this->data, image_data_size);
+			std::memcpy(frame_data + sizeof(uint32_t) * 4, this->image_data(), image_data_size);
 		}
 
 		int size() {
@@ -112,8 +114,7 @@ namespace Perevod
 			}
 			auto i = this->queue.front();
 			this->queue.pop();
-
-			return i;	
+			return i;
 		}
 
 		bool empty() const {
@@ -128,9 +129,9 @@ namespace Perevod
 		ImageSocketUDPImpl() {};
 		~ImageSocketUDPImpl() {};
 		
-		void send_frame(std::shared_ptr<Perevod::ImageFrame *>frame) {}
+		void send_frame(std::shared_ptr<Perevod::ImageFrame>frame) {}
 
-		std::shared_ptr<Perevod::ImageFrame *> read_frame() {
+		std::shared_ptr<Perevod::ImageFrame> read_frame() {
 			return nullptr;
 		}
 	};
@@ -148,6 +149,9 @@ namespace Perevod
 		int send_port;
 		int receive_port;
 	public:
+		Queue<std::shared_ptr<Perevod::ImageFrame>> send_queue;
+		Queue<std::shared_ptr<Perevod::ImageFrame>> received_queue;
+
 		ImageSocketTCPImpl(std::string ip_address, int send_port, int receive_port) : send_socket(this->send_io_service), receive_socket(this->receive_io_service), acceptor(this->receive_io_service, tcp::endpoint(tcp::v4(), receive_port)) {
 			this->ip_address = ip_address;
 			this->send_port = send_port;
@@ -171,17 +175,17 @@ namespace Perevod
 			this->send_socket.close();	
 		}
 
-		void send_frame(std::shared_ptr<Perevod::ImageFrame *>frame) {
-			unsigned char *frame_data = new unsigned char[(*frame)->image_width() * (*frame)->image_height() * 3 + sizeof(uint32_t) * 4];
-			(*frame)->read_raw_byte(frame_data);
-			this->send_data(frame_data, (*frame)->frame_size());
+		void send_frame(std::shared_ptr<Perevod::ImageFrame>frame) {
+			unsigned char *frame_data = new unsigned char[frame->image_width() * frame->image_height() * 3 + sizeof(uint32_t) * 4];
+			frame->read_raw_byte(frame_data);
+			this->send_data(frame_data, frame->frame_size());
 			delete frame_data;
 		}
 
-		std::shared_ptr<Perevod::ImageFrame *> read_frame() {
+		std::shared_ptr<Perevod::ImageFrame> read_frame() {
 			this->acceptor.accept(this->receive_socket);
 			
-			std::shared_ptr<Perevod::ImageFrame *>frame = nullptr;
+			std::shared_ptr<Perevod::ImageFrame>frame;
 			boost::system::error_code error;
 			asio::read(this->receive_socket, this->receive_buffer, asio::transfer_all(), error);
 			if (error && error != asio::error::eof) {
@@ -198,7 +202,7 @@ namespace Perevod
 				std::memcpy(&height, data + sizeof(uint32_t) * 3, sizeof(uint32_t));
 				unsigned char *image_data = (unsigned char *)data + sizeof(uint32_t) * 4;
 
-				frame = std::make_shared<Perevod::ImageFrame *>(new ImageFrame(x, y, width, height, image_data));
+				frame = std::make_shared<Perevod::ImageFrame>(ImageFrame(x, y, width, height, image_data));
 			}
 			this->receive_buffer.consume(this->receive_buffer.size());
 			this->receive_socket.close();
@@ -214,27 +218,22 @@ namespace Perevod
 
 	class ImageSocket
 	{
-		Queue<std::shared_ptr<Perevod::ImageFrame *>> send_queue;
-		Queue<std::shared_ptr<Perevod::ImageFrame *>> received_queue;
-
 		ImageSocketMode mode;
 		ImageSocketTCPImpl *tcp_impl;
 		ImageSocketUDPImpl *upd_impl;
 	public:
 		bool suspend_cast_loop;
 		bool suspend_receive_loop;
-		std::function<void(std::shared_ptr<Perevod::ImageFrame *>)> receive_handler;
+		std::function<void(std::shared_ptr<Perevod::ImageFrame>)> receive_handler;
 
 		ImageSocket(std::string ip_address, int send_port, int receive_port, ImageSocketMode mode) : mode(mode) {
 			this->tcp_impl = nullptr;
 			this->upd_impl = nullptr;
 
 			if (mode == ImageSocketModeTCP) {
-				PEREVOD_DEBUG_LOG("TCP");
 				this->tcp_impl = new ImageSocketTCPImpl(ip_address, send_port, receive_port);
 			}
 			else {
-				PEREVOD_DEBUG_LOG("UDP");
 				this->upd_impl = new ImageSocketUDPImpl();
 			}
 			
@@ -246,22 +245,22 @@ namespace Perevod
 		~ImageSocket() {
 			delete this->tcp_impl;
 			delete this->upd_impl;
-		};
-
-		void push_frame(std::shared_ptr<Perevod::ImageFrame *>frame) {
-			this->send_queue.push(frame);
 		}
 
-		std::shared_ptr<Perevod::ImageFrame *> pop_frame() {
-			return this->received_queue.try_pop();
+		void push_frame(std::shared_ptr<Perevod::ImageFrame>frame) {
+			this->tcp_impl->send_queue.push(frame);
 		}
 
-		void send_frame(std::shared_ptr<Perevod::ImageFrame *>frame) {
-			this->mode == ImageSocketModeTCP ? this->tcp_impl->send_frame(frame) : this->upd_impl->send_frame(frame);
+		std::shared_ptr<Perevod::ImageFrame> pop_frame() {
+			return this->tcp_impl->received_queue.try_pop();
 		}
 
-		std::shared_ptr<Perevod::ImageFrame *> read_frame() {
-			std::shared_ptr<Perevod::ImageFrame *>frame = this->mode == ImageSocketModeTCP ? this->tcp_impl->read_frame() : this->upd_impl->read_frame();
+		void send_frame(std::shared_ptr<Perevod::ImageFrame>frame) {
+			this->tcp_impl->send_frame(frame);
+		}
+
+		std::shared_ptr<Perevod::ImageFrame> read_frame() {
+			std::shared_ptr<Perevod::ImageFrame>frame = this->tcp_impl->read_frame();
 
 			return frame;
 		}
@@ -269,22 +268,20 @@ namespace Perevod
 		void run_cast_loop() {
 			this->suspend_cast_loop = false;
 			while (!this->suspend_cast_loop) {
-				std::shared_ptr<Perevod::ImageFrame *>frame = this->send_queue.try_pop();
-				if (frame) {
-					this->send_frame(frame);
-				}
+				std::shared_ptr<Perevod::ImageFrame>frame = this->tcp_impl->send_queue.pop();
+				this->send_frame(frame);
 			}
 		}
 
 		void run_receive_loop() {
 			this->suspend_receive_loop = false;
 			while (!this->suspend_receive_loop) {
-				std::shared_ptr<Perevod::ImageFrame *>frame = this->read_frame();
+				std::shared_ptr<Perevod::ImageFrame>frame = this->read_frame();
 				if (this->receive_handler) {
 					this->receive_handler(frame);
 				}
 				else {
-					this->received_queue.push(frame);
+					this->tcp_impl->received_queue.push(frame);
 				}
 			}
 		}

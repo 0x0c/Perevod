@@ -1,3 +1,4 @@
+#include <iostream>
 #include <string>
 #include <functional>
 #include <thread>
@@ -7,6 +8,11 @@
 
 namespace asio = boost::asio;
 using asio::ip::tcp;
+
+#define DEBUG
+#ifdef DEBUG
+#define DEBUG_LOG(x) std::cout << __PRETTY_FUNCTION__ << " " <<  x << std::endl;
+#endif
 
 cv::Mat bytes_to_mat(unsigned char *bytes, uint32_t width, uint32_t height)
 {
@@ -18,7 +24,6 @@ cv::Mat bytes_to_mat(unsigned char *bytes, uint32_t width, uint32_t height)
 int main(int argc, char **argv)
 {
 	Perevod::ImageSocket socket(std::string(argv[2]), atoi(argv[3]), atoi(argv[4]), Perevod::ImageSocketModeTCP);
-	std::cout << "client" << std::endl;
 	auto t = std::thread([&socket] {
 		socket.run_cast_loop();
 	});
@@ -30,8 +35,8 @@ int main(int argc, char **argv)
 		std::string filename = "img/" + std::string(argv[1]) + "/" + std::to_string(index % 30 + 1) + ".jpeg";
 		cv::Mat image = cv::imread(filename);
 
-		auto frame = std::make_shared<Perevod::ImageFrame *>(new Perevod::ImageFrame(200, 400, image.cols, image.rows, image.data));
-		std::cout << "push frame : " << (*frame)->size() << std::endl;
+		auto frame = std::make_shared<Perevod::ImageFrame>(Perevod::ImageFrame(200, 400, image.cols, image.rows, image.data));
+		std::cout << "send image" << std::endl;
 		socket.push_frame(frame);
 		index++;
 
@@ -39,8 +44,9 @@ int main(int argc, char **argv)
 
 		auto frame2 = socket.pop_frame();
 		if (frame2) {
-			std::cout << "receive" << std::endl;
-			cv::Mat image = bytes_to_mat((*frame2)->image_data(), (*frame2)->image_width(), (*frame2)->image_height());
+			std::cout << "receied image" << std::endl;
+			cv::Mat image = bytes_to_mat(frame2->image_data(), frame2->image_width(), frame2->image_height());
+			std::cout << "show image" << std::endl;
 			cv::imshow("received image" + std::string(argv[1]), image);
 		}
 		if (cv::waitKey(60) > 0) {
