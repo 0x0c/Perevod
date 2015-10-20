@@ -26,12 +26,10 @@ For server mode.
 make run_s
 ```
 
-Please run with server mode first.
-
 ## TODO
 - [ ] Use udp.
 - [ ] Multi threading.
-- [ ] Use smart pointer. 
+- [x] Use smart pointer. 
 
 ## Licence
 
