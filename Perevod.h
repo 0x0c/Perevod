@@ -30,6 +30,14 @@ namespace Perevod
 		std::vector<unsigned char> data;
 	public:
 		
+		ImageFrame(uint32_t x, uint32_t y, uint32_t width, uint32_t height, std::vector<unsigned char> data) {
+			this->x = x;
+			this->y = y;
+			this->width = width;
+			this->height = height;
+			this->data = data;
+		};
+
 		ImageFrame(uint32_t x, uint32_t y, uint32_t width, uint32_t height, unsigned char *data) {
 			this->x = x;
 			this->y = y;
@@ -50,7 +58,11 @@ namespace Perevod
 			return this->y;
 		}
 
-		unsigned char* image_data() {
+		std::vector<unsigned char> image_data() {
+			return this->data;
+		}
+
+		unsigned char* image_raw_data() {
 			return this->data.data();
 		}
 
@@ -63,12 +75,11 @@ namespace Perevod
 		}
 		
 		void read_raw_byte(unsigned char *frame_data) {
-			int image_data_size = width * height * 3;
 			std::memcpy(frame_data, &this->x, sizeof(uint32_t));
 			std::memcpy(frame_data + sizeof(uint32_t), &this->y, sizeof(uint32_t));
 			std::memcpy(frame_data + sizeof(uint32_t) * 2, &this->width, sizeof(uint32_t));
 			std::memcpy(frame_data + sizeof(uint32_t) * 3, &this->height, sizeof(uint32_t));
-			std::memcpy(frame_data + sizeof(uint32_t) * 4, this->image_data(), image_data_size);
+			std::memcpy(frame_data + sizeof(uint32_t) * 4, this->image_raw_data(), this->data.size());
 		}
 
 		int size() {
