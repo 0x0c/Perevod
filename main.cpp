@@ -37,7 +37,7 @@ void run_as_tcp(std::string foldername, std::string ip_address, int send_port, i
 		std::vector<int> param = std::vector<int>(2);
 		param[0] = CV_IMWRITE_JPEG_QUALITY;
 		param[1] = 50;
-	 	cv::imencode(".jpg", image, buff, param);
+		cv::imencode(".jpg", image, buff, param);
 
 		auto frame = std::make_shared<Perevod::ImageFrame>(Perevod::ImageFrame(200, 400, image.cols, image.rows, buff));
 		std::cout << "send image" << std::endl;
@@ -49,9 +49,9 @@ void run_as_tcp(std::string foldername, std::string ip_address, int send_port, i
 		auto frame2 = socket.pop_frame();
 		if (frame2) {
 			std::cout << "receied image" << std::endl;
-			cv::Mat jpegimage = imdecode(cv::Mat(frame2->image_data()), CV_LOAD_IMAGE_COLOR);
+			cv::Mat received_image = imdecode(cv::Mat(frame2->image_data()), CV_LOAD_IMAGE_COLOR);
 			std::cout << "show image" << std::endl;
-			cv::imshow("received image" + foldername, image);
+			cv::imshow("received image" + foldername, received_image);
 		}
 		if (cv::waitKey(60) > 0) {
 			break;
@@ -74,4 +74,6 @@ int main(int argc, char **argv)
 		// 	run_as_udp(std::string(argv[2]), std::string(argv[3]), atoi(argv[4]), atoi(argv[5]));
 		// }
 	}
+
+	return 0;
 }
