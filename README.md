@@ -28,7 +28,7 @@ make s
 
 ## TODO
 - [ ] Use udp.
-- [ ] Multi threading.
+- [x] Multi threading.
 - [x] Use smart pointer. 
 
 ## Licence
