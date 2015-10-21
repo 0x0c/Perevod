@@ -33,7 +33,7 @@ make s
 
 ## Licence
 
-MIT Licence
+MIT License
 
 ## Credits
 Gif anime 
