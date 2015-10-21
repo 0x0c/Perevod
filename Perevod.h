@@ -123,27 +123,7 @@ namespace Perevod
 		}
 	};
 
-	class ImageSocketImpl
-	{
-	public:
-		ImageSocketImpl() {};
-		~ImageSocketImpl() {};
-	};
-
-	class ImageSocketUDPImpl : public ImageSocketImpl
-	{
-	public:
-		ImageSocketUDPImpl() {};
-		~ImageSocketUDPImpl() {};
-		
-		void send_frame(std::shared_ptr<Perevod::ImageFrame>frame) {}
-
-		std::shared_ptr<Perevod::ImageFrame> read_frame() {
-			return nullptr;
-		}
-	};
-
-	class ImageSocketTCPImpl : public ImageSocketImpl
+	class ImageSocketTCPImpl
 	{
 		asio::io_service send_io_service;
 		tcp::socket send_socket;
