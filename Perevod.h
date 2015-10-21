@@ -38,12 +38,11 @@ namespace Perevod
 			this->data = data;
 		};
 
-		ImageFrame(uint32_t x, uint32_t y, uint32_t width, uint32_t height, unsigned char *data) {
+		ImageFrame(uint32_t x, uint32_t y, uint32_t width, uint32_t height, unsigned char *data, int image_data_size) {
 			this->x = x;
 			this->y = y;
 			this->width = width;
 			this->height = height;
-			int image_data_size = width * height * 3;
 			this->data.resize(image_data_size);
 			std::copy(data, data + image_data_size, this->data.begin());
 		};
@@ -255,7 +254,7 @@ namespace Perevod
 				std::memcpy(&height, data + sizeof(uint32_t) * 3, sizeof(uint32_t));
 				unsigned char *image_data = (unsigned char *)data + sizeof(uint32_t) * 4;
 
-				frame = std::make_shared<Perevod::ImageFrame>(ImageFrame(x, y, width, height, image_data));
+				frame = std::make_shared<Perevod::ImageFrame>(ImageFrame(x, y, width, height, image_data, this->receive_buffer.size() - sizeof(uint32_t) * 4));
 			}
 			this->receive_buffer.consume(this->receive_buffer.size());
 			this->receive_socket.close();
