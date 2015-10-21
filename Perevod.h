@@ -50,8 +50,7 @@ namespace Perevod
 		}
 
 		unsigned char* image_data() {
-			std::string data_str(this->data.begin(), this->data.end());
-			return (unsigned char *)data_str.c_str();
+			return this->data.data();
 		}
 
 		int image_width() {
@@ -121,6 +120,20 @@ namespace Perevod
 			std::unique_lock<std::mutex> lock(this->mutex);
 			return this->queue.empty();
 		}
+	};
+
+	class ImageSocketUDPImpl
+	{
+		asio::io_service send_io_service;
+		tcp::socket send_socket;
+
+		asio::io_service receive_io_service;
+		tcp::socket receive_socket;
+		asio::streambuf receive_buffer;
+		tcp::acceptor acceptor;
+		std::string ip_address;
+		int send_port;
+		int receive_port;
 	};
 
 	class ImageSocketTCPImpl
