@@ -72,7 +72,7 @@ namespace Perevod
 		}
 
 		int size() {
-			return this->width * this->height * 3;
+			return this->data.size();
 		}
 
 		int frame_size() {
@@ -123,7 +123,14 @@ namespace Perevod
 		}
 	};
 
-	class ImageSocketUDPImpl
+	class ImageSocketImpl
+	{
+	public:
+		ImageSocketImpl() {};
+		~ImageSocketImpl() {};
+	};
+
+	class ImageSocketUDPImpl : public ImageSocketImpl
 	{
 	public:
 		ImageSocketUDPImpl() {};
@@ -136,7 +143,7 @@ namespace Perevod
 		}
 	};
 
-	class ImageSocketTCPImpl
+	class ImageSocketTCPImpl : public ImageSocketImpl
 	{
 		asio::io_service send_io_service;
 		tcp::socket send_socket;
@@ -211,64 +218,46 @@ namespace Perevod
 		}
 	};
 
-	typedef enum {
-		ImageSocketModeTCP,
-		ImageSocketModeUDP
-	} ImageSocketMode;
-
-	class ImageSocket
+	template <typename T> class ImageSocket
 	{
-		ImageSocketMode mode;
-		ImageSocketTCPImpl *tcp_impl;
-		ImageSocketUDPImpl *upd_impl;
+		T *impl;
 	public:
 		bool suspend_cast_loop;
 		bool suspend_receive_loop;
 		std::function<void(std::shared_ptr<Perevod::ImageFrame>)> receive_handler;
 
-		ImageSocket(std::string ip_address, int send_port, int receive_port, ImageSocketMode mode) : mode(mode) {
-			this->tcp_impl = nullptr;
-			this->upd_impl = nullptr;
-
-			if (mode == ImageSocketModeTCP) {
-				this->tcp_impl = new ImageSocketTCPImpl(ip_address, send_port, receive_port);
-			}
-			else {
-				this->upd_impl = new ImageSocketUDPImpl();
-			}
-			
+		ImageSocket(std::string ip_address, int send_port, int receive_port) {
+			this->impl = new T(ip_address, send_port, receive_port);
 			this->receive_handler = nullptr;
 			this->suspend_cast_loop = true;
 			this->suspend_receive_loop = true;
 		}
 
 		~ImageSocket() {
-			delete this->tcp_impl;
-			delete this->upd_impl;
+			delete this->impl;
 		}
 
 		void push_frame(std::shared_ptr<Perevod::ImageFrame>frame) {
-			this->tcp_impl->send_queue.push(frame);
+			this->impl->send_queue.push(frame);
 		}
 
 		std::shared_ptr<Perevod::ImageFrame> pop_frame() {
-			return this->tcp_impl->received_queue.try_pop();
+			return this->impl->received_queue.try_pop();
 		}
 
 		void send_frame(std::shared_ptr<Perevod::ImageFrame>frame) {
-			this->tcp_impl->send_frame(frame);
+			this->impl->send_frame(frame);
 		}
 
 		std::shared_ptr<Perevod::ImageFrame> read_frame() {
-			std::shared_ptr<Perevod::ImageFrame>frame = this->tcp_impl->read_frame();
-
+			std::shared_ptr<Perevod::ImageFrame>frame = this->impl->read_frame();
 			return frame;
 		}
 
 		void run_cast_loop() {
 			this->suspend_cast_loop = false;
 			while (!this->suspend_cast_loop) {
-				std::shared_ptr<Perevod::ImageFrame>frame = this->tcp_impl->send_queue.pop();
+				std::shared_ptr<Perevod::ImageFrame>frame = this->impl->send_queue.pop();
 				this->send_frame(frame);
 			}
 		}
@@ -281,7 +270,7 @@ namespace Perevod
 					this->receive_handler(frame);
 				}
 				else {
-					this->tcp_impl->received_queue.push(frame);
+					this->impl->received_queue.push(frame);
 				}
 			}
 		}

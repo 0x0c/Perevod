@@ -23,7 +23,7 @@ cv::Mat bytes_to_mat(unsigned char *bytes, uint32_t width, uint32_t height)
 
 int main(int argc, char **argv)
 {
-	Perevod::ImageSocket socket(std::string(argv[2]), atoi(argv[3]), atoi(argv[4]), Perevod::ImageSocketModeTCP);
+	Perevod::ImageSocket<Perevod::ImageSocketTCPImpl> socket(std::string(argv[2]), atoi(argv[3]), atoi(argv[4]));
 	auto t = std::thread([&socket] {
 		socket.run_cast_loop();
 	});
