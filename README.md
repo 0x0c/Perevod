@@ -14,16 +14,14 @@ Pervod, a image communicator using TCP.
 
 ## Usage
 
-For client mode.
-
 ```
-make c
+make tc
 ```
 
-For server mode.
+or
 
 ```
-make s
+make ts
 ```
 
 ## TODO
