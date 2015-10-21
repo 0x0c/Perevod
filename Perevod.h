@@ -7,6 +7,8 @@
 #include <condition_variable>
 #include <memory>
 #include <thread>
+#include <chrono>
+#include <future>
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
@@ -151,7 +153,7 @@ namespace Perevod
 		~ImageSocketImpl() {};
 		virtual void send_data(unsigned char *data, int size) = 0;
 		void send_frame(std::shared_ptr<Perevod::ImageFrame>frame) {
-			unsigned char *frame_data = new unsigned char[frame->image_width() * frame->image_height() * 3 + sizeof(uint32_t) * 4];
+			unsigned char *frame_data = new unsigned char[frame->frame_size()];
 			frame->read_raw_byte(frame_data);
 			this->send_data(frame_data, frame->frame_size());
 			delete frame_data;
@@ -270,6 +272,7 @@ namespace Perevod
 		bool suspend_cast_loop;
 		bool suspend_receive_loop;
 		std::function<void(std::shared_ptr<Perevod::ImageFrame>)> receive_handler;
+		long long cast_interval;
 
 		ImageSocket(std::string ip_address, int send_port, int receive_port) {
 			this->impl = new T(ip_address, send_port, receive_port);
@@ -283,7 +286,18 @@ namespace Perevod
 		}
 
 		void push_frame(std::shared_ptr<Perevod::ImageFrame>frame) {
-			this->impl->send_queue.push(frame);
+			std::function<void()> push = [this, frame] {
+				this->impl->send_queue.push(frame);
+			};
+			if (this->cast_interval > 0) {
+				std::async(std::launch::async, [this, &push] {
+					std::this_thread::sleep_for(std::chrono::milliseconds(this->cast_interval));
+					push();
+				});
+			}
+			else {
+				push();
+			}
 		}
 
 		std::shared_ptr<Perevod::ImageFrame> pop_frame() {

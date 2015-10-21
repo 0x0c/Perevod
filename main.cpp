@@ -2,6 +2,7 @@
 #include <string>
 #include <functional>
 #include <thread>
+#include <chrono>
 #include <cv.h>
 #include <highgui.h>
 #include "Perevod.h"
@@ -32,7 +33,6 @@ void run_as_tcp(std::string foldername, std::string ip_address, int send_port, i
 		std::string filename = "img/" + foldername + "/" + std::to_string(index % 30 + 1) + ".jpeg";
 		cv::Mat image = cv::imread(filename);
 
-		//(1) jpeg compression
 		std::vector<unsigned char> buff;
 		std::vector<int> param = std::vector<int>(2);
 		param[0] = CV_IMWRITE_JPEG_QUALITY;
