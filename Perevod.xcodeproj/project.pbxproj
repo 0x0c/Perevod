@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		E9E7A19F1BD65FB2004A7C72 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E9E7A19E1BD65FB2004A7C72 /* main.cpp */; };
+		E9A012B01BD762B9006D1EEF /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E9A012AF1BD762B9006D1EEF /* main.cpp */; };
 		E9E7A1B51BD660E2004A7C72 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = E9E7A1B41BD660E2004A7C72 /* Makefile */; };
 /* End PBXBuildFile section */
 
@@ -24,8 +24,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		E9A012AF1BD762B9006D1EEF /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = SOURCE_ROOT; };
 		E9E7A19B1BD65FB2004A7C72 /* Perevod */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Perevod; sourceTree = BUILT_PRODUCTS_DIR; };
-		E9E7A19E1BD65FB2004A7C72 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		E9E7A1AB1BD660A8004A7C72 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		E9E7A1B41BD660E2004A7C72 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
@@ -61,8 +61,8 @@
 		E9E7A19D1BD65FB2004A7C72 /* Perevod */ = {
 			isa = PBXGroup;
 			children = (
+				E9A012AF1BD762B9006D1EEF /* main.cpp */,
 				E9E7A1B41BD660E2004A7C72 /* Makefile */,
-				E9E7A19E1BD65FB2004A7C72 /* main.cpp */,
 			);
 			path = Perevod;
 			sourceTree = "<group>";
@@ -152,8 +152,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E9A012B01BD762B9006D1EEF /* main.cpp in Sources */,
 				E9E7A1B51BD660E2004A7C72 /* Makefile in Sources */,
-				E9E7A19F1BD65FB2004A7C72 /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -304,6 +304,7 @@
 				E9E7A1B31BD660B6004A7C72 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
