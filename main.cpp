@@ -7,6 +7,7 @@
 #include <highgui.h>
 #include "Perevod.h"
 
+//#define __PEREVOD_DEBUG_MODE__
 #define DEBUG
 #ifdef DEBUG
 #define DEBUG_LOG(x) std::cout << __PRETTY_FUNCTION__ << " " <<  x << std::endl;

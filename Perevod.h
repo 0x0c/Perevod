@@ -17,7 +17,6 @@ namespace asio = boost::asio;
 using asio::ip::tcp;
 using asio::ip::udp;
 
-#define __PEREVOD_DEBUG_MODE__
 #ifdef __PEREVOD_DEBUG_MODE__
 #define PEREVOD_DEBUG_LOG(x) std::cout << "[Perevod] " << x << std::endl;
 #define PEREVOD_DEBUG_PRETTY_LOG(x) std::cout << "[Perevod] " << __PRETTY_FUNCTION__ << " " << x << std::endl;
