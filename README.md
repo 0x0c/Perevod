@@ -32,7 +32,7 @@ make ts
 
 ## TODO
 - [ ] Use udp.
-- [ ] Queue control.
+- [x] Queue control.
 - [x] Multi threading.
 - [x] Use smart pointer. 
 

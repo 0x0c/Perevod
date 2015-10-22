@@ -19,8 +19,11 @@ using asio::ip::udp;
 
 #define __PEREVOD_DEBUG_MODE__
 #ifdef __PEREVOD_DEBUG_MODE__
-#define PEREVOD_DEBUG_LOG(x) std::cout << x << std::endl;
-#define PEREVOD_DEBUG_PRETTY_LOG(x) std::cout << __PRETTY_FUNCTION__ << " " << x << std::endl;
+#define PEREVOD_DEBUG_LOG(x) std::cout << "[Perevod] " << x << std::endl;
+#define PEREVOD_DEBUG_PRETTY_LOG(x) std::cout << "[Perevod] " << __PRETTY_FUNCTION__ << " " << x << std::endl;
+#else
+#define PEREVOD_DEBUG_LOG(x)
+#define PEREVOD_DEBUG_PRETTY_LOG(x)
 #endif
 
 namespace Perevod
@@ -98,14 +101,25 @@ namespace Perevod
 		mutable std::mutex mutex;
 		std::condition_variable	cond;
 	public:
-		Queue() {};
+		int limit;
+
+		Queue() {
+			this->limit = 0;
+		};
 		~Queue() {};
 
-		void push(T data) {
+		bool push(T data) {
 			std::unique_lock<std::mutex> lock(this->mutex);
+			bool limit = false;
+			if (this->limit > 0 && this->limit < this->queue.size() + 1) {
+				limit = true;
+				this->queue.pop();
+			}
 			this->queue.push(data);
 			lock.unlock();
 			this->cond.notify_one();
+
+			return limit;
 		}
 
 		T pop() {
@@ -151,7 +165,9 @@ namespace Perevod
 			this->receive_port = receive_port;
 		};
 		~ImageSocketImpl() {};
+
 		virtual void send_data(unsigned char *data, int size) = 0;
+
 		void send_frame(std::shared_ptr<Perevod::ImageFrame>frame) {
 			unsigned char *frame_data = new unsigned char[frame->frame_size()];
 			frame->read_raw_byte(frame_data);
@@ -229,6 +245,7 @@ namespace Perevod
 			do {
 				this->send_socket.connect(tcp::endpoint(asio::ip::address::from_string(this->ip_address), this->send_port), error);
 			} while (error);
+			PEREVOD_DEBUG_LOG("TCP connected");
 
 			this->send_io_service.run();
 
@@ -274,6 +291,9 @@ namespace Perevod
 		std::function<void(std::shared_ptr<Perevod::ImageFrame>)> receive_handler;
 		long long cast_interval;
 
+		void set_cast_queue_limit(int limit) { this->impl->send_queue.limit = limit; };
+		void set_receive_queue_limit(int limit) { this->impl->receive_queue.limit = limit; };
+
 		ImageSocket(std::string ip_address, int send_port, int receive_port) {
 			this->impl = new T(ip_address, send_port, receive_port);
 			this->receive_handler = nullptr;
@@ -287,7 +307,11 @@ namespace Perevod
 
 		void push_frame(std::shared_ptr<Perevod::ImageFrame>frame) {
 			std::function<void()> push = [this, frame] {
-				this->impl->send_queue.push(frame);
+				PEREVOD_DEBUG_LOG("push_frame");
+				bool limit = this->impl->send_queue.push(frame);
+				if (limit) {
+					PEREVOD_DEBUG_LOG("send queue limit.");
+				}
 			};
 			if (this->cast_interval > 0) {
 				std::async(std::launch::async, [this, &push] {
@@ -301,19 +325,23 @@ namespace Perevod
 		}
 
 		std::shared_ptr<Perevod::ImageFrame> pop_frame() {
+			PEREVOD_DEBUG_LOG("pop_frame");
 			return this->impl->received_queue.try_pop();
 		}
 
 		void send_frame(std::shared_ptr<Perevod::ImageFrame>frame) {
+			PEREVOD_DEBUG_LOG("send_frame");
 			this->impl->send_frame(frame);
 		}
 
 		std::shared_ptr<Perevod::ImageFrame> read_frame() {
+			PEREVOD_DEBUG_LOG("read_frame");
 			std::shared_ptr<Perevod::ImageFrame>frame = this->impl->read_frame();
 			return frame;
 		}
 
 		void run_cast_loop() {
+			PEREVOD_DEBUG_LOG("run_cast_loop");
 			this->suspend_cast_loop = false;
 			while (!this->suspend_cast_loop) {
 				std::shared_ptr<Perevod::ImageFrame>frame = this->impl->send_queue.pop();
@@ -322,6 +350,7 @@ namespace Perevod
 		}
 
 		void run_receive_loop() {
+			PEREVOD_DEBUG_LOG("run_receive_loop");
 			this->suspend_receive_loop = false;
 			while (!this->suspend_receive_loop) {
 				std::shared_ptr<Perevod::ImageFrame>frame = this->read_frame();
@@ -329,7 +358,10 @@ namespace Perevod
 					this->receive_handler(frame);
 				}
 				else {
-					this->impl->received_queue.push(frame);
+					bool limit = this->impl->received_queue.push(frame);
+					if (limit) {
+						PEREVOD_DEBUG_LOG("received queue limit.");
+					}
 				}
 			}
 		}
