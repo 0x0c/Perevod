@@ -50,7 +50,7 @@ void run_as_tcp(std::string foldername, std::string ip_address, int send_port, i
 		auto frame2 = socket.pop_frame();
 		if (frame2) {
 			std::cout << "receied image" << std::endl;
-			cv::Mat received_image = imdecode(cv::Mat(frame2->image_data()), CV_LOAD_IMAGE_COLOR);
+			cv::Mat received_image = imdecode(cv::Mat(frame2->frame_data()), CV_LOAD_IMAGE_COLOR);
 			std::cout << "show image" << std::endl;
 			cv::imshow("received image" + foldername, received_image);
 		}

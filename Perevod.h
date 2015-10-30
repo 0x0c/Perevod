@@ -7,11 +7,14 @@
 #include <condition_variable>
 #include <memory>
 #include <thread>
-#include <chrono>
 #include <future>
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
+
+#ifndef _WIN32
+#include <chrono>
+#endif
 
 #ifdef __PEREVOD_DEBUG_MODE__
 #define PEREVOD_DEBUG_LOG(x) std::cout << "[Perevod] " << x << std::endl;
@@ -23,25 +26,31 @@
 
 namespace Perevod
 {
-	class ImageFrame
+	template <typename T> class Frame
 	{
 	protected:
-		uint32_t x, y, width, height;
-		std::vector<unsigned char> data;
+		std::vector<T> data;
 	public:
-		
+		uint32_t x, y, width, height;
+
+		virtual std::vector<T> frame_data() = 0;
+		virtual int frame_size() = 0;
+		virtual T* raw_data() = 0;
+		virtual int data_size() = 0;
+	};
+
+	class ImageFrame : public Frame <unsigned char>
+	{
+	public:
+		ImageFrame();
 		ImageFrame(uint32_t x, uint32_t y, uint32_t width, uint32_t height, std::vector<unsigned char> data);
 		ImageFrame(uint32_t x, uint32_t y, uint32_t width, uint32_t height, unsigned char *data, int image_data_size);
 
-		uint32_t position_x();
-		uint32_t position_y();
-		std::vector<unsigned char> image_data();
-		unsigned char* image_raw_data();
-		int image_width();
-		int image_height();
-		void read_raw_byte(unsigned char *frame_data);
-		int size();
+		std::vector<unsigned char> frame_data();
 		int frame_size();
+		unsigned char* raw_data();
+		int data_size();
+		void read_raw_byte(unsigned char *frame_data);
 	};
 
 	template <typename T> class Queue
@@ -52,49 +61,11 @@ namespace Perevod
 	public:
 		int limit;
 
-		Queue() {
-			this->limit = 0;
-		};
-	
-		bool push(T data) {
-			std::unique_lock<std::mutex> lock(this->mutex);
-			bool limit = false;
-			if (this->limit > 0 && this->limit < this->queue.size() + 1) {
-				limit = true;
-				this->queue.pop();
-			}
-			this->queue.push(data);
-			lock.unlock();
-			this->cond.notify_one();
-
-			return limit;
-		}
-
-		T pop() {
-			std::unique_lock<std::mutex> lock(this->mutex);
-			while (this->queue.empty()) {
-				this->cond.wait(lock);
-		    }
-			auto i = this->queue.front();
-			this->queue.pop();
-
-			return i;
-		}
-
-		T try_pop() {
-			std::unique_lock<std::mutex> lock(this->mutex);
-			if (this->queue.empty()) {
-				return nullptr;
-			}
-			auto i = this->queue.front();
-			this->queue.pop();
-			return i;
-		}
-
-		bool empty() const {
-			std::unique_lock<std::mutex> lock(this->mutex);
-			return this->queue.empty();
-		}
+		Queue();
+		bool push(T data);
+		T pop();
+		T try_pop();
+		bool empty() const;
 	};
 
 	class ImageSocketImpl
@@ -135,81 +106,23 @@ namespace Perevod
 		bool suspend_cast_loop;
 		bool suspend_receive_loop;
 		std::function<void(std::shared_ptr<Perevod::ImageFrame>)> receive_handler;
+
+		#ifndef _WIN32
 		long long cast_interval;
+		#endif
 
-		void set_cast_queue_limit(int limit) { this->impl->send_queue.limit = limit; };
-		void set_receive_queue_limit(int limit) { this->impl->receive_queue.limit = limit; };
+		ImageSocket(std::string ip_address, int send_port, int receive_port);
+		~ImageSocket();
 
-		ImageSocket(std::string ip_address, int send_port, int receive_port) {
-			this->impl = new T(ip_address, send_port, receive_port);
-			this->receive_handler = nullptr;
-			this->suspend_cast_loop = true;
-			this->suspend_receive_loop = true;
-		}
-
-		~ImageSocket() {
-			delete this->impl;
-		}
-
-		void push_frame(std::shared_ptr<Perevod::ImageFrame>frame) {
-			std::function<void()> push = [this, frame] {
-				PEREVOD_DEBUG_LOG("push_frame");
-				bool limit = this->impl->send_queue.push(frame);
-				if (limit) {
-					PEREVOD_DEBUG_LOG("send queue limit.");
-				}
-			};
-			if (this->cast_interval > 0) {
-				std::async(std::launch::async, [this, &push] {
-					std::this_thread::sleep_for(std::chrono::milliseconds(this->cast_interval));
-					push();
-				});
-			}
-			else {
-				push();
-			}
-		}
-
-		std::shared_ptr<Perevod::ImageFrame> pop_frame() {
-			PEREVOD_DEBUG_LOG("pop_frame");
-			return this->impl->received_queue.try_pop();
-		}
-
-		void send_frame(std::shared_ptr<Perevod::ImageFrame>frame) {
-			PEREVOD_DEBUG_LOG("send_frame");
-			this->impl->send_frame(frame);
-		}
-
-		std::shared_ptr<Perevod::ImageFrame> read_frame() {
-			PEREVOD_DEBUG_LOG("read_frame");
-			std::shared_ptr<Perevod::ImageFrame>frame = this->impl->read_frame();
-			return frame;
-		}
-
-		void run_cast_loop() {
-			PEREVOD_DEBUG_LOG("run_cast_loop");
-			this->suspend_cast_loop = false;
-			while (!this->suspend_cast_loop) {
-				std::shared_ptr<Perevod::ImageFrame>frame = this->impl->send_queue.pop();
-				this->send_frame(frame);
-			}
-		}
-
-		void run_receive_loop() {
-			PEREVOD_DEBUG_LOG("run_receive_loop");
-			this->suspend_receive_loop = false;
-			while (!this->suspend_receive_loop) {
-				std::shared_ptr<Perevod::ImageFrame>frame = this->read_frame();
-				if (this->receive_handler) {
-					this->receive_handler(frame);
-				}
-				else {
-					bool limit = this->impl->received_queue.push(frame);
-					if (limit) {
-						PEREVOD_DEBUG_LOG("received queue limit.");
-					}
-				}
-			}
-		}
+		void set_cast_queue_limit(int limit) ;
+		void set_receive_queue_limit(int limit);
+		void push_frame(std::shared_ptr<Perevod::ImageFrame>frame);
+		std::shared_ptr<Perevod::ImageFrame> pop_frame();
+		void send_frame(std::shared_ptr<Perevod::ImageFrame>frame);
+		std::shared_ptr<Perevod::ImageFrame> read_frame();
+		void run_cast_loop();
+		void run_receive_loop();
 	};
 }
+
+#include "detail/Perevod.h"

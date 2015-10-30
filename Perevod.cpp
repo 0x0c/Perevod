@@ -6,7 +6,13 @@ using asio::ip::udp;
 
 namespace Perevod
 {
-	ImageFrame::ImageFrame(uint32_t x, uint32_t y, uint32_t width, uint32_t height, std::vector<unsigned char> data) {
+	ImageFrame::ImageFrame() {
+		this->x = 0;
+		this->y = 0;
+		this->width = 0;
+		this->height = 0;
+	}
+	ImageFrame::ImageFrame(uint32_t x, uint32_t y, uint32_t width, uint32_t height, std::vector<unsigned char> data) : ImageFrame() {
 		this->x = x;
 		this->y = y;
 		this->width = width;
@@ -14,7 +20,7 @@ namespace Perevod
 		this->data = data;
 	}
 
-	ImageFrame::ImageFrame(uint32_t x, uint32_t y, uint32_t width, uint32_t height, unsigned char *data, int image_data_size) {
+	ImageFrame::ImageFrame(uint32_t x, uint32_t y, uint32_t width, uint32_t height, unsigned char *data, int image_data_size) : ImageFrame(){
 		this->x = x;
 		this->y = y;
 		this->width = width;
@@ -23,44 +29,28 @@ namespace Perevod
 		std::copy(data, data + image_data_size, this->data.begin());
 	}
 
-	uint32_t ImageFrame::position_x() {
-		return this->x;
-	}
-
-	uint32_t ImageFrame::position_y() {
-		return this->y;
-	}
-
-	std::vector<unsigned char> ImageFrame::image_data() {
+	std::vector<unsigned char> ImageFrame::frame_data() {
 		return this->data;
 	}
 
-	unsigned char* ImageFrame::image_raw_data() {
+	int ImageFrame::frame_size() {
+		return this->data_size() + sizeof(uint32_t) * 4;
+	}
+
+	unsigned char* ImageFrame::raw_data() {
 		return this->data.data();
 	}
-
-	int ImageFrame::image_width() {
-		return this->width;
-	}
-
-	int ImageFrame::image_height() {
-		return this->height;
-	}
 	
+	int ImageFrame::data_size() {
+		return this->data.size() * sizeof(unsigned char);
+	}
+
 	void ImageFrame::read_raw_byte(unsigned char *frame_data) {
 		std::memcpy(frame_data, &this->x, sizeof(uint32_t));
 		std::memcpy(frame_data + sizeof(uint32_t), &this->y, sizeof(uint32_t));
 		std::memcpy(frame_data + sizeof(uint32_t) * 2, &this->width, sizeof(uint32_t));
 		std::memcpy(frame_data + sizeof(uint32_t) * 3, &this->height, sizeof(uint32_t));
-		std::memcpy(frame_data + sizeof(uint32_t) * 4, this->image_raw_data(), this->data.size());
-	}
-
-	int ImageFrame::size() {
-		return this->data.size();
-	}
-
-	int ImageFrame::frame_size() {
-		return this->size() + sizeof(uint32_t) * 4;
+		std::memcpy(frame_data + sizeof(uint32_t) * 4, this->raw_data(), this->data_size());
 	}
 
 	ImageSocketImpl::ImageSocketImpl(std::string ip_address, int send_port, int receive_port) {
