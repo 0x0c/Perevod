@@ -36,10 +36,6 @@ namespace Perevod
 	int ImageFrame::frame_size() {
 		return this->data_size() + sizeof(uint32_t) * 4;
 	}
-
-	unsigned char* ImageFrame::raw_data() {
-		return this->data.data();
-	}
 	
 	int ImageFrame::data_size() {
 		return this->data.size() * sizeof(unsigned char);
@@ -50,7 +46,7 @@ namespace Perevod
 		std::memcpy(frame_data + sizeof(uint32_t), &this->y, sizeof(uint32_t));
 		std::memcpy(frame_data + sizeof(uint32_t) * 2, &this->width, sizeof(uint32_t));
 		std::memcpy(frame_data + sizeof(uint32_t) * 3, &this->height, sizeof(uint32_t));
-		std::memcpy(frame_data + sizeof(uint32_t) * 4, this->raw_data(), this->data_size());
+		std::memcpy(frame_data + sizeof(uint32_t) * 4, this->data.data(), this->data_size());
 	}
 
 	ImageSocketImpl::ImageSocketImpl(std::string ip_address, int send_port, int receive_port) {
@@ -67,8 +63,8 @@ namespace Perevod
 	}
 
 	ImageSocketTCPImpl::ImageSocketTCPImpl(std::string ip_address, int send_port, int receive_port) :ImageSocketImpl(ip_address, send_port, receive_port), send_socket(this->send_io_service), receive_socket(this->receive_io_service), acceptor(this->receive_io_service, tcp::endpoint(tcp::v4(), receive_port)) {
-		asio::socket_base::reuse_address option(true);
-		this->acceptor.set_option(option);
+		asio::socket_base::reuse_address reuse_address(true);
+		this->acceptor.set_option(reuse_address);
 		asio::socket_base::keep_alive keep_alive(true);
 		this->acceptor.set_option(keep_alive);
 	}

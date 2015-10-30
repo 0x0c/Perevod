@@ -35,8 +35,8 @@ namespace Perevod
 
 		virtual std::vector<T> frame_data() = 0;
 		virtual int frame_size() = 0;
-		virtual T* raw_data() = 0;
 		virtual int data_size() = 0;
+		virtual void read_raw_byte(T *frame_data) = 0;
 	};
 
 	class ImageFrame : public Frame <unsigned char>
