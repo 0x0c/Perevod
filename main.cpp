@@ -7,7 +7,6 @@
 #include <highgui.h>
 #include "Perevod.h"
 
-//#define __PEREVOD_DEBUG_MODE__
 #define DEBUG
 #ifdef DEBUG
 #define DEBUG_LOG(x) std::cout << __PRETTY_FUNCTION__ << " " <<  x << std::endl;
@@ -41,7 +40,9 @@ void run_as_tcp(std::string foldername, std::string ip_address, int send_port, i
 		cv::imencode(".jpg", image, buff, param);
 
 		auto frame = std::make_shared<Perevod::ImageFrame>(Perevod::ImageFrame(200, 400, image.cols, image.rows, buff));
-		std::cout << "send image" << std::endl;
+		auto sub_frame = std::make_shared<Perevod::ImageFrame>(Perevod::ImageFrame(200, 400, image.cols, image.rows, buff));
+		frame->sub_frame.push_back(sub_frame);
+		std::cout << "send image : " << frame->frame_size() << std::endl;
 		socket.push_frame(frame);
 		index++;
 
@@ -49,10 +50,16 @@ void run_as_tcp(std::string foldername, std::string ip_address, int send_port, i
 
 		auto frame2 = socket.pop_frame();
 		if (frame2) {
-			std::cout << "receied image" << std::endl;
+			std::cout << "receied image : " << frame2->frame_size() << std::endl;
 			cv::Mat received_image = imdecode(cv::Mat(frame2->frame_data()), CV_LOAD_IMAGE_COLOR);
 			std::cout << "show image" << std::endl;
 			cv::imshow("received image" + foldername, received_image);
+			for (int i = 0; i < frame2->sub_frame.size(); ++i) {
+				std::shared_ptr<Perevod::ImageFrame> f = frame2->sub_frame.at(i);
+				cv::Mat received_image2 = imdecode(cv::Mat(f->frame_data()), CV_LOAD_IMAGE_COLOR);
+				std::cout << "show image2" << std::endl;
+				cv::imshow("received image2 " + foldername, received_image2);
+			}
 		}
 		if (cv::waitKey(60) > 0) {
 			break;

@@ -34,23 +34,24 @@ namespace Perevod
 		uint32_t x, y, width, height;
 
 		virtual std::vector<T> frame_data() = 0;
-		virtual int frame_size() = 0;
-		virtual int data_size() = 0;
+		virtual uint32_t frame_size() = 0;
+		virtual uint32_t data_size() = 0;
 		virtual void read_raw_byte(T *frame_data) = 0;
 	};
 
 	class ImageFrame : public Frame <unsigned char>
 	{
 	public:
-		ImageFrame();
+		std::vector<std::shared_ptr<Perevod::ImageFrame>> sub_frame;
+
 		ImageFrame(uint32_t x, uint32_t y, uint32_t width, uint32_t height, std::vector<unsigned char> data);
 		ImageFrame(uint32_t x, uint32_t y, uint32_t width, uint32_t height, unsigned char *data, int image_data_size);
 
 		std::vector<unsigned char> frame_data();
-		int frame_size();
-		unsigned char* raw_data();
-		int data_size();
+		uint32_t frame_size();
+		uint32_t data_size();
 		void read_raw_byte(unsigned char *frame_data);
+		void append_raw_byte(unsigned char *frame_data, int *offset);
 	};
 
 	template <typename T> class Queue
@@ -96,6 +97,7 @@ namespace Perevod
 		ImageSocketTCPImpl(std::string ip_address, int send_port, int receive_port);
 
 		void send_data(unsigned char *data, int size);
+		std::shared_ptr<Perevod::ImageFrame> parse_frame(const unsigned char *data, int *offset);
 		std::shared_ptr<Perevod::ImageFrame> read_frame();
 	};
 

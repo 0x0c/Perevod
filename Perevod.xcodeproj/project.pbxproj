@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		E9A012B01BD762B9006D1EEF /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E9A012AF1BD762B9006D1EEF /* main.cpp */; };
 		E9E7A1B51BD660E2004A7C72 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = E9E7A1B41BD660E2004A7C72 /* Makefile */; };
+		E9EF953C1BE40A6900BC52D8 /* Perevod.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E9EF953A1BE40A6900BC52D8 /* Perevod.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -26,8 +27,10 @@
 /* Begin PBXFileReference section */
 		E9A012AF1BD762B9006D1EEF /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = SOURCE_ROOT; };
 		E9E7A19B1BD65FB2004A7C72 /* Perevod */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Perevod; sourceTree = BUILT_PRODUCTS_DIR; };
-		E9E7A1AB1BD660A8004A7C72 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		E9E7A1B41BD660E2004A7C72 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = SOURCE_ROOT; };
+		E9EF95391BE40A6900BC52D8 /* Perevod.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Perevod.h; sourceTree = "<group>"; };
+		E9EF953A1BE40A6900BC52D8 /* Perevod.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Perevod.cpp; sourceTree = SOURCE_ROOT; };
+		E9EF953B1BE40A6900BC52D8 /* Perevod.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Perevod.h; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -45,7 +48,6 @@
 			isa = PBXGroup;
 			children = (
 				E9E7A19D1BD65FB2004A7C72 /* Perevod */,
-				E9E7A1AA1BD660A8004A7C72 /* Make */,
 				E9E7A19C1BD65FB2004A7C72 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -61,19 +63,22 @@
 		E9E7A19D1BD65FB2004A7C72 /* Perevod */ = {
 			isa = PBXGroup;
 			children = (
+				E9EF95381BE40A6900BC52D8 /* detail */,
+				E9EF953A1BE40A6900BC52D8 /* Perevod.cpp */,
+				E9EF953B1BE40A6900BC52D8 /* Perevod.h */,
 				E9A012AF1BD762B9006D1EEF /* main.cpp */,
 				E9E7A1B41BD660E2004A7C72 /* Makefile */,
 			);
 			path = Perevod;
 			sourceTree = "<group>";
 		};
-		E9E7A1AA1BD660A8004A7C72 /* Make */ = {
+		E9EF95381BE40A6900BC52D8 /* detail */ = {
 			isa = PBXGroup;
 			children = (
-				E9E7A1AB1BD660A8004A7C72 /* main.cpp */,
+				E9EF95391BE40A6900BC52D8 /* Perevod.h */,
 			);
-			path = Make;
-			sourceTree = "<group>";
+			path = detail;
+			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXGroup section */
 
@@ -153,6 +158,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E9A012B01BD762B9006D1EEF /* main.cpp in Sources */,
+				E9EF953C1BE40A6900BC52D8 /* Perevod.cpp in Sources */,
 				E9E7A1B51BD660E2004A7C72 /* Makefile in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

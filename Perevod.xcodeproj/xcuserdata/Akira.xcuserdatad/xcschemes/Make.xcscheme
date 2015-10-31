@@ -66,6 +66,10 @@
       </MacroExpansion>
       <CommandLineArguments>
          <CommandLineArgument
+            argument = "-t"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "-s"
             isEnabled = "YES">
          </CommandLineArgument>

@@ -18,16 +18,11 @@ Pervod, a image communicator using TCP.
   - boost.asio
 - OpenCV 2.4.11 (for sample code.)
 
-## Usage
+## Example
+Do this.
 
 ```
-make tc
-```
-
-or
-
-```
-make ts
+make test
 ```
 
 ## TODO
