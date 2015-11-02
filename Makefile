@@ -1,9 +1,10 @@
 CC = clang++
-CFLAGS = -g -I/opt/local/include -std=c++11 `pkg-config --cflags opencv` `pkg-config --libs opencv`
+CFLAGS = -g -Ilib/ -Llib/ -I/opt/local/include -std=c++11 `pkg-config --cflags opencv` `pkg-config --libs opencv`
 LDLIBS = /opt/local/lib/libboost_system-mt.dylib
+PEREVOD_FILE = lib/Perevod.cpp lib/core/ImageSocket.cpp lib/frame/ImageFrame/ImageFrame.cpp lib/impl/ImageSocketImpl.cpp lib/impl/tcp/ImageSocketImplTCP.cpp lib/util/Queue.cpp
 
 all:
-	$(CC) main.cpp Perevod.cpp $(LDLIBS) $(CFLAGS) -o Perevod
+	$(CC) main.cpp $(PEREVOD_FILE) $(LDLIBS) $(CFLAGS) -o Perevod
 
 test:
 	./Perevod -t -c 127.0.0.1 31401 31400 &
