@@ -27,7 +27,7 @@ namespace Perevod
 		this->acceptor.set_option(keep_alive);
 	}
 	
-	void ImageSocketTCPImpl::send_data(unsigned char *data, int size) {
+	void ImageSocketTCPImpl::send_data(unsigned char *data, size_t size) {
 		boost::system::error_code error;
 		do {
 			this->send_socket.connect(tcp::endpoint(asio::ip::address::from_string(this->ip_address), this->send_port), error);
@@ -40,7 +40,7 @@ namespace Perevod
 		this->send_socket.close();	
 	}
 
-	std::shared_ptr<Perevod::ImageFrame> ImageSocketTCPImpl::parse_frame(const unsigned char *data, int *offset) {	
+	std::shared_ptr<Perevod::ImageFrame> ImageSocketTCPImpl::parse_frame(const unsigned char *data, size_t *offset) {	
 		uint32_t x, y;
 		std::memcpy(&x, data + *offset, sizeof(uint32_t));
 		*offset += sizeof(uint32_t);
@@ -77,7 +77,7 @@ namespace Perevod
 			std::cout << error.message() << std::endl;
 		}
 		else {
-			int offset = 0;
+			size_t offset = 0;
 			const unsigned char *data = asio::buffer_cast<const unsigned char *>(this->receive_buffer.data());
 
 			uint8_t frame_count = 0;

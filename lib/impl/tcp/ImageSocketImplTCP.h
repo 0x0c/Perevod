@@ -14,8 +14,8 @@ namespace Perevod
 	public:
 		ImageSocketTCPImpl(std::string ip_address, int send_port, int receive_port);
 
-		void send_data(unsigned char *data, int size);
-		std::shared_ptr<Perevod::ImageFrame> parse_frame(const unsigned char *data, int *offset);
+		void send_data(unsigned char *data, size_t size);
+		std::shared_ptr<Perevod::ImageFrame> parse_frame(const unsigned char *data, size_t *offset);
 		std::shared_ptr<Perevod::ImageFrame> read_frame();
 	};
 }

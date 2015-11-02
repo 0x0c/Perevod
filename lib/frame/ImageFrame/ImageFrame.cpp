@@ -11,7 +11,7 @@ namespace Perevod
 		this->data = data;
 	}
 
-	ImageFrame::ImageFrame(uint32_t x, uint32_t y, uint32_t width, uint32_t height, unsigned char *data, int image_data_size) {
+	ImageFrame::ImageFrame(uint32_t x, uint32_t y, uint32_t width, uint32_t height, unsigned char *data, size_t image_data_size) {
 		this->x = x;
 		this->y = y;
 		this->width = width;
@@ -39,7 +39,7 @@ namespace Perevod
 		return this->data.size() * sizeof(unsigned char);
 	}
 
-	void ImageFrame::append_raw_byte(unsigned char *frame_data, int *offset) {
+	void ImageFrame::append_raw_byte(unsigned char *frame_data, size_t *offset) {
 		std::memcpy(frame_data + *offset, &this->x, sizeof(uint32_t));
 		*offset += sizeof(uint32_t);
 		std::memcpy(frame_data + *offset, &this->y, sizeof(uint32_t));
@@ -57,7 +57,7 @@ namespace Perevod
 	}
 
 	void ImageFrame::read_raw_byte(unsigned char *frame_data) {
-		int offset = 0;
+		size_t offset = 0;
 		uint8_t frame_count = 1 + this->sub_frame.size();
 		PEREVOD_DEBUG_LOG("send frame count " << unsigned(frame_count));
 		std::memcpy(frame_data, &frame_count, sizeof(uint8_t));

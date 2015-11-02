@@ -19,7 +19,7 @@ namespace Perevod
 
 		ImageSocketImpl(std::string ip_address, int send_port, int receive_port);
 
-		virtual void send_data(unsigned char *data, int size) = 0;
+		virtual void send_data(unsigned char *data, size_t size) = 0;
 		void send_frame(std::shared_ptr<Perevod::ImageFrame>frame);
 	};
 }
