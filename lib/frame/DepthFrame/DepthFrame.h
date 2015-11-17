@@ -3,5 +3,5 @@
 
 namespace Perevod
 {
-	typedef Frame<unsigned char> ImageFrame;
+	typedef Frame<unsigned short> DepthFrame;
 }
